@@ -1,0 +1,32 @@
+Commands to invoque in order to make containers communicate directly without using docker bridge:
+
+1) first step
+docker -itd run --net=none --name cx snort
+docker -itd run --net=none --name cy snort
+
+2) second step
+ip link add cx_eth0 type veth peer name cy_eth0
+
+docker inspect --format '{{.State.Pid}}' cx
+docker inspect --format '{{.State.Pid}}' cy
+
+3) third step
+mkdir -p /var/run/netns
+
+ln -s /proc/18226/ns/net /var/run/netns/18226
+ln -s /proc/18250/ns/net /var/run/netns/18250
+
+4) forth step
+a)for cx :
+ip link set cx_eth0 netns 18226
+ip netns exec 18226 ip addr add 10.1.1.1/32 dev cx_eth0
+ip netns exec 18226 ip link set cx_eth0 up
+ip netns exec 18226 ip route add 10.1.1.2/32 dev cx_eth0
+
+b)for cy:
+ip link set cy_eth0 netns 18250
+ip netns exec 18250 ip addr add 10.1.1.2/32 dev cy_eth0
+ip netns exec 18250 ip link set cy_eth0 up
+ip netns exec 18250 ip route add 10.1.1.1/32 dev cy_eth0
+
+

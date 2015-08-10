@@ -1,0 +1,28 @@
+docker run --cpuset-cpus=0 --net=none --name cx snort
+
+docker run --net=none --name cy snort
+
+ip link add cx_eth0 type veth peer name cy_eth0
+
+docker inspect --format '{{.State.Pid}}' cx
+docker inspect --format '{{.State.Pid}}' cy
+
+
+mkdir -p /var/run/netns
+
+ln -s /proc/18226/ns/net /var/run/netns/18226
+ln -s /proc/18250/ns/net /var/run/netns/18250
+
+pour cx :
+ip link set cx_eth0 netns 18226
+ip netns exec 18226 ip addr add 10.1.1.1/32 dev cx_eth0
+ip netns exec 18226 ip link set cx_eth0 up
+ip netns exec 18226 ip route add 10.1.1.2/32 dev cx_eth0
+
+pour cy:
+ip link set cy_eth0 netns 18250
+ip netns exec 18250 ip addr add 10.1.1.2/32 dev cy_eth0
+ip netns exec 18250 ip link set cy_eth0 up
+ip netns exec 18250 ip route add 10.1.1.1/32 dev cy_eth0
+
+

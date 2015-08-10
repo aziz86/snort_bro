@@ -1,0 +1,4 @@
+All these simulations are done as follows :
+- Snort and tcpreplay run inside the same container.
+- Thanks to taskset command tool, each process is attached to a specific cpu, that is, each process uses its own cpu.
+
